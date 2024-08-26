@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Components/ContactList.dart';
+import 'package:flutter_ios_contact_app/Pages/Settings.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +20,10 @@ class _HomePage extends State<HomePage> {
             padding: EdgeInsets.zero,
             onPressed: () {
               // Move to Settings Bage
+              Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                      builder: (context) => const SettingsPage()));
             },
             child: const Text("Settings")),
         middle: const Text("Contacts List"),

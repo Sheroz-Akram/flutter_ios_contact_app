@@ -1,28 +1,27 @@
 import 'package:flutter/cupertino.dart';
-import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Preferences extends ChangeNotifier {
-  static const _boxName = 'preferencesBox';
   static const _isDarkModeKey = 'isDarkMode';
 
-  late Box<bool> _preferencesBox;
+  late SharedPreferences _preferences;
 
   Preferences() {
     _init();
   }
 
   Future<void> _init() async {
-    _preferencesBox = await Hive.openBox<bool>(_boxName);
+    _preferences = await SharedPreferences.getInstance();
     notifyListeners();
   }
 
   bool get isDarkMode {
-    return _preferencesBox.get(_isDarkModeKey, defaultValue: false) ?? false;
+    return _preferences.getBool(_isDarkModeKey) ?? false;
   }
 
   Future<void> toggleDarkMode() async {
     final currentMode = isDarkMode;
-    await _preferencesBox.put(_isDarkModeKey, !currentMode);
+    await _preferences.setBool(_isDarkModeKey, !currentMode);
     notifyListeners();
   }
 }

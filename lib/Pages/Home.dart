@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ios_contact_app/Classes/Contact.dart';
+import 'package:flutter_ios_contact_app/Classes/ContactDatabase.dart';
 import 'package:flutter_ios_contact_app/Components/ContactList.dart';
+import 'package:flutter_ios_contact_app/Pages/NewContact.dart';
 import 'package:flutter_ios_contact_app/Pages/Settings.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,18 +15,38 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePage extends State<HomePage> {
+  // Attributes
+  List<Contact> contactList = [];
+
+  // Load Contact from Memeory
+  void loadContacts() async {
+    ContactDatabase contactDataBase = ContactDatabase();
+    List<Contact> contacts = await contactDataBase.getContacts();
+    setState(() {
+      contactList = contacts;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadContacts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () {
+            onPressed: () async {
               // Move to Settings Bage
-              Navigator.push(
+              await Navigator.push(
                   context,
                   CupertinoPageRoute(
                       builder: (context) => const SettingsPage()));
+              // Reload All Contacts
+              loadContacts();
             },
             child: const Text("Settings")),
         middle: const Text("Contacts List"),
@@ -32,6 +55,10 @@ class _HomePage extends State<HomePage> {
           child: const Icon(CupertinoIcons.add),
           onPressed: () {
             // Move to Add Contact Page
+            Navigator.push(
+                context,
+                CupertinoPageRoute(
+                    builder: (context) => const NewContactPage()));
           },
         ),
       ),
@@ -65,7 +92,7 @@ class _HomePage extends State<HomePage> {
             ),
             // Contact List
             Expanded(
-              child: ContactListWidget(contacts: contacts),
+              child: ContactListWidget(contacts: contactList),
             ),
           ],
         ),

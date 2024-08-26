@@ -25,6 +25,4 @@ class Preferences extends ChangeNotifier {
     await _preferencesBox.put(_isDarkModeKey, !currentMode);
     notifyListeners();
   }
-
-  // Add other settings management methods here
 }

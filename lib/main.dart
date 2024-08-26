@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
 
     return CupertinoApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Contacts',
       theme: CupertinoThemeData(
         brightness: isDarkMode ? Brightness.dark : Brightness.light,
         barBackgroundColor: isDarkMode

@@ -92,7 +92,19 @@ class _HomePage extends State<HomePage> {
             ),
             // Contact List
             Expanded(
-              child: ContactListWidget(contacts: contactList),
+              child: ContactListWidget(
+                contacts: contactList,
+                deleteContact: (Contact contact) async {
+                  // Delete the Contact
+                  ContactDatabase contactDatabase = ContactDatabase();
+                  print(contact.toMap());
+                  await contactDatabase.deleteContact(contact.id!);
+                  setState(() {
+                    int index = contactList.indexOf(contact);
+                    contactList.removeAt(index);
+                  });
+                },
+              ),
             ),
           ],
         ),

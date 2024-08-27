@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Classes/Contact.dart';
+import 'package:flutter_ios_contact_app/Pages/ViewContact.dart';
 
 // Dummy list of contacts
 final List<Contact> contacts = [];
@@ -128,6 +129,11 @@ class ContactListWidget extends StatelessWidget {
                       child: const Icon(CupertinoIcons.info),
                       onPressed: () {
                         // Show contact details or perform another action
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) =>
+                                    ViewContact(contact: contact)));
                       },
                     ),
                   ],

@@ -4,10 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Classes/Contact.dart';
 import 'package:flutter_ios_contact_app/Classes/ContactDatabase.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter_ios_contact_app/Classes/ImageManagement.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class NewContactPage extends StatefulWidget {
   const NewContactPage({super.key});
@@ -17,104 +15,36 @@ class NewContactPage extends StatefulWidget {
 }
 
 class _NewContactPageState extends State<NewContactPage> {
+  // Text Field Controllers
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  String profilePicturePath = "";
+  // Attributes
+  late Contact contact;
+  ImageManagement imageManager = ImageManagement(); // Help to Manage Images
+  var contactDatabase = ContactDatabase();
 
-  // Store the Image Permanently
-  Future<String> _saveImagePermanently(File imageFile) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName = '${DateTime.now()}.png';
-    final filePath = '${directory.path}/$fileName';
-    final savedImage = await imageFile.copy(filePath);
-    return savedImage.path;
+  /// Help to Manage Contacts Database
+
+  // Add Image to Contact
+  void addImage(ImageSource source) async {
+    if (source == ImageSource.gallery) {
+      await imageManager.selectImage();
+    } else if (source == ImageSource.camera) {
+      await imageManager.takePicture();
+    } else {
+      return;
+    }
+    await imageManager.cropImage();
+    String imagePath = await imageManager.saveImagePermanently();
+    setState(() {
+      contact.profilePicture = imagePath;
+    });
   }
 
-  Future<void> _cropImage(File imageFile) async {
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: imageFile.path,
-    );
-    if (croppedFile != null) {
-      final savedPath = await _saveImagePermanently(imageFile);
-      setState(() {
-        profilePicturePath = savedPath;
-      });
-      print(profilePicturePath);
-    }
-  }
-
-  Future<void> _requestPermissions() async {
-    // Check the current status of each permission
-    final statusGallery = await Permission.photos.status;
-    final statusCamera = await Permission.camera.status;
-    final statusStorage = await Permission.storage.status;
-
-    // Request permissions only if they are not granted
-    if (!statusGallery.isGranted) {
-      await Permission.photos.request();
-    }
-
-    if (!statusCamera.isGranted) {
-      await Permission.camera.request();
-    }
-
-    if (!statusStorage.isGranted) {
-      await Permission.storage.request();
-    }
-  }
-
-  Future<void> _selectImage() async {
-    await _requestPermissions();
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      _cropImage(File(image.path));
-    }
-  }
-
-  Future<void> _takePicture() async {
-    await _requestPermissions();
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      _cropImage(File(image.path));
-    }
-  }
-
-  void _showImageOptions() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Choose Profile Picture'),
-        actions: [
-          CupertinoActionSheetAction(
-            child: const Text('Take Photo'),
-            onPressed: () {
-              Navigator.pop(context);
-              _takePicture();
-            },
-          ),
-          CupertinoActionSheetAction(
-            child: const Text('Select from Gallery'),
-            onPressed: () {
-              Navigator.pop(context);
-              _selectImage();
-            },
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          child: const Text('Cancel'),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-    );
-  }
-
+  // Show Alert to the User
   void _showAlert(String title, String message) {
     showCupertinoDialog(
       context: context,
@@ -133,7 +63,8 @@ class _NewContactPageState extends State<NewContactPage> {
     );
   }
 
-  void _handleDone() async {
+  // Handle Contact Done
+  void _handleDone() {
     // Get All the Input Information
     String firstName = _firstNameController.text;
     String lastName = _lastNameController.text;
@@ -151,20 +82,62 @@ class _NewContactPageState extends State<NewContactPage> {
       return;
     }
 
-    // Create New Contact
-    Contact contact = Contact(
-        profilePicture: profilePicturePath,
-        firstName: firstName,
-        lastName: lastName,
-        phoneNumber: phoneNumber,
-        address: address);
+    // Store the Contact Information
+    contact.firstName = firstName;
+    contact.lastName = lastName;
+    contact.phoneNumber = phoneNumber;
+    contact.address = address;
 
-    // Insert our Contact into database
-    var contactDatabase = ContactDatabase();
-    await contactDatabase.insertContact(contact);
+    // Update Data on Database
+    contactDatabase.insertContact(contact);
 
     // Move to Previous Page
     Navigator.pop(context);
+  }
+
+  void _showImageOptions() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Choose Profile Picture'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Take Photo'),
+            onPressed: () {
+              Navigator.pop(context);
+              addImage(ImageSource.camera);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Select from Gallery'),
+            onPressed: () {
+              Navigator.pop(context);
+              addImage(ImageSource.gallery);
+            },
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancel'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      // Initialize Contact with no data
+      contact = Contact(
+          firstName: "",
+          lastName: "",
+          phoneNumber: "",
+          address: "",
+          profilePicture: "");
+    });
   }
 
   @override
@@ -195,11 +168,11 @@ class _NewContactPageState extends State<NewContactPage> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: CupertinoTheme.of(context).barBackgroundColor,
-                backgroundImage: profilePicturePath != ""
-                    ? FileImage(File(profilePicturePath))
+                backgroundImage: contact.profilePicture != ""
+                    ? FileImage(File(contact.profilePicture))
                     : const AssetImage('assets/default_profile.png')
                         as ImageProvider,
-                child: profilePicturePath == ""
+                child: contact.profilePicture == ""
                     ? const Icon(
                         CupertinoIcons.profile_circled,
                         color: CupertinoColors.systemGrey,

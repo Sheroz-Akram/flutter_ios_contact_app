@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Classes/Contact.dart';
 import 'package:flutter_ios_contact_app/Classes/ContactDatabase.dart';
 import 'package:flutter_ios_contact_app/Components/ContactList.dart';
+import 'package:flutter_ios_contact_app/Pages/EditContact.dart';
 import 'package:flutter_ios_contact_app/Pages/NewContact.dart';
 import 'package:flutter_ios_contact_app/Pages/Settings.dart';
 
@@ -20,6 +21,7 @@ class _HomePage extends State<HomePage> {
 
   // Load Contact from Memeory
   void loadContacts() async {
+    print("Contacts Loaded");
     ContactDatabase contactDataBase = ContactDatabase();
     List<Contact> contacts = await contactDataBase.getContacts();
     setState(() {
@@ -39,14 +41,14 @@ class _HomePage extends State<HomePage> {
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () async {
-              // Move to Settings Bage
-              await Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                      builder: (context) => const SettingsPage()));
-              // Reload All Contacts
-              loadContacts();
+            onPressed: () {
+              // Move to Settings Page
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
+              );
             },
             child: const Text("Settings")),
         middle: const Text("Contacts List"),
@@ -103,6 +105,13 @@ class _HomePage extends State<HomePage> {
                     int index = contactList.indexOf(contact);
                     contactList.removeAt(index);
                   });
+                },
+                editContact: (Contact contact) {
+                  // Move to Edit Contact Page
+                  Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                          builder: (context) => EditPage(contact: contact)));
                 },
               ),
             ),

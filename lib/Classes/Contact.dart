@@ -1,12 +1,12 @@
 import 'package:url_launcher/url_launcher.dart';
 
 class Contact {
-  final int? id; // Added for SQLite operations
-  final String firstName;
-  final String lastName;
-  final String phoneNumber;
-  final String address;
-  final String profilePicture;
+  int? id; // Added for SQLite operations
+  String firstName;
+  String lastName;
+  String phoneNumber;
+  String address;
+  String profilePicture;
 
   Contact({
     this.id,

@@ -1,9 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Classes/Contact.dart';
-import 'package:flutter_ios_contact_app/Classes/ContactDatabase.dart';
 
 // Dummy list of contacts
 final List<Contact> contacts = [];
@@ -12,9 +10,13 @@ class ContactListWidget extends StatelessWidget {
   final List<Contact> contacts;
 
   const ContactListWidget(
-      {super.key, required this.contacts, required this.deleteContact});
+      {super.key,
+      required this.contacts,
+      required this.deleteContact,
+      required this.editContact});
 
   final Function deleteContact;
+  final Function editContact;
 
   @override
   Widget build(BuildContext context) {
@@ -166,8 +168,9 @@ class ContactListWidget extends StatelessWidget {
               ],
             ),
             onPressed: () {
+              // Edit Contact Logic
               Navigator.pop(context);
-              // Handle edit action
+              editContact(contact);
             },
           ),
           CupertinoActionSheetAction(
@@ -183,10 +186,7 @@ class ContactListWidget extends StatelessWidget {
                 Text('Share')
               ],
             ),
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle edit action
-            },
+            onPressed: () {},
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,

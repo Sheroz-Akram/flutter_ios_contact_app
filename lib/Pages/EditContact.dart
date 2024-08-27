@@ -4,82 +4,60 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ios_contact_app/Classes/Contact.dart';
 import 'package:flutter_ios_contact_app/Classes/ContactDatabase.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter_ios_contact_app/Classes/ImageManagement.dart';
 import 'package:image_picker/image_picker.dart';
 
-class EditContactPage extends StatefulWidget {
-  const EditContactPage({super.key});
+class EditPage extends StatefulWidget {
+  const EditPage({super.key, required this.contact});
+
+  final Contact contact;
 
   @override
-  _EditContactPageState createState() => _EditContactPageState();
+  _EditPageState createState() => _EditPageState();
 }
 
-class _EditContactPageState extends State<EditContactPage> {
+class _EditPageState extends State<EditPage> {
+  // Text Field Controllers
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  File? _profilePicture;
+  // Attributes
+  late Contact contact;
+  ImageManagement imageManager = ImageManagement(); // Help to Manage Images
+  var contactDatabase = ContactDatabase();
 
-  Future<void> _cropImage(File imageFile) async {
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: imageFile.path,
-    );
-    if (croppedFile != null) {
-      setState(() {
-        _profilePicture = File(croppedFile.path);
-      });
+  /// Help to Manage Contacts Database
+
+  // Add Image to Contact
+  void addImage(ImageSource source) async {
+    if (source == ImageSource.gallery) {
+      await imageManager.selectImage();
+    } else if (source == ImageSource.camera) {
+      await imageManager.takePicture();
+    } else {
+      return;
     }
+    await imageManager.cropImage();
+    String imagePath = await imageManager.saveImagePermanently();
+    setState(() {
+      contact.profilePicture = imagePath;
+    });
   }
 
-  Future<void> _selectImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      _cropImage(File(image.path));
-    }
+  // Load Contact Information
+  void loadContact() {
+    setState(() {
+      contact = widget.contact;
+      _firstNameController.text = contact.firstName;
+      _lastNameController.text = contact.lastName;
+      _phoneNumberController.text = contact.phoneNumber;
+      _addressController.text = contact.address;
+    });
   }
 
-  Future<void> _takePicture() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      _cropImage(File(image.path));
-    }
-  }
-
-  void _showImageOptions() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Choose Profile Picture'),
-        actions: [
-          CupertinoActionSheetAction(
-            child: const Text('Take Photo'),
-            onPressed: () {
-              Navigator.pop(context);
-              _takePicture();
-            },
-          ),
-          CupertinoActionSheetAction(
-            child: const Text('Select from Gallery'),
-            onPressed: () {
-              Navigator.pop(context);
-              _selectImage();
-            },
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          child: const Text('Cancel'),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-    );
-  }
-
+  // Show Alert to the User
   void _showAlert(String title, String message) {
     showCupertinoDialog(
       context: context,
@@ -98,7 +76,8 @@ class _EditContactPageState extends State<EditContactPage> {
     );
   }
 
-  void _handleDone() async {
+  // Handle Contact Done
+  void _handleDone() {
     // Get All the Input Information
     String firstName = _firstNameController.text;
     String lastName = _lastNameController.text;
@@ -116,29 +95,61 @@ class _EditContactPageState extends State<EditContactPage> {
       return;
     }
 
-    // Create New Contact
-    Contact contact = Contact(
-        profilePicture: "",
-        firstName: firstName,
-        lastName: lastName,
-        phoneNumber: phoneNumber,
-        address: address);
+    // Store the Contact Information
+    contact.firstName = firstName;
+    contact.lastName = lastName;
+    contact.phoneNumber = phoneNumber;
+    contact.address = address;
 
-    // Insert our Contact into database
-    var contactDatabase = ContactDatabase();
-    int id = await contactDatabase.insertContact(contact);
-
-    print("Contact Inserted to Database: $id");
+    // Update Data on Database
+    contactDatabase.updateContact(contact);
 
     // Move to Previous Page
     Navigator.pop(context);
+  }
+
+  void _showImageOptions() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Choose Profile Picture'),
+        actions: [
+          CupertinoActionSheetAction(
+            child: const Text('Take Photo'),
+            onPressed: () {
+              Navigator.pop(context);
+              addImage(ImageSource.camera);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: const Text('Select from Gallery'),
+            onPressed: () {
+              Navigator.pop(context);
+              addImage(ImageSource.gallery);
+            },
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancel'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadContact();
   }
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: const Text('New Contact'),
+        middle: const Text('Edit Contact'),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: const Text('Cancel'),
@@ -148,64 +159,106 @@ class _EditContactPageState extends State<EditContactPage> {
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: _handleDone,
+          onPressed: () {
+            // Save the contact
+            _handleDone();
+          },
           child: const Text('Done'),
         ),
       ),
       child: SafeArea(
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _showImageOptions,
-              child: CircleAvatar(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 50,
+              ),
+              CircleAvatar(
                 radius: 50,
-                backgroundImage: _profilePicture != null
-                    ? FileImage(_profilePicture!)
+                backgroundColor: CupertinoTheme.of(context).barBackgroundColor,
+                backgroundImage: contact.profilePicture != ""
+                    ? FileImage(File(contact.profilePicture))
                     : const AssetImage('assets/default_profile.png')
                         as ImageProvider,
-                child: _profilePicture == null
+                child: contact.profilePicture == ""
                     ? const Icon(
-                        CupertinoIcons.camera,
+                        CupertinoIcons.profile_circled,
                         color: CupertinoColors.systemGrey,
-                        size: 50,
+                        size: 100,
                       )
                     : null,
               ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                  color: CupertinoTheme.of(context).barBackgroundColor,
-                  borderRadius: const BorderRadius.all(Radius.circular(10))),
-              margin: const EdgeInsets.symmetric(horizontal: 10.0),
-              padding: const EdgeInsets.all(5.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CupertinoTextFormFieldRow(
-                    prefix: const Text('First Name:'),
-                    placeholder: "John",
-                    controller: _firstNameController,
-                  ),
-                  CupertinoTextFormFieldRow(
-                    prefix: const Text('Last Name:'),
-                    placeholder: "Doe",
-                    controller: _lastNameController,
-                  ),
-                  CupertinoTextFormFieldRow(
-                    prefix: const Text('Phone Number:'),
-                    placeholder: "(123) 456-7890",
-                    controller: _phoneNumberController,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  CupertinoTextFormFieldRow(
-                    placeholder: "123 Main St, Springfield, IL 62704",
-                    prefix: const Text('Address:'),
-                    controller: _addressController,
-                  ),
-                ],
+              CupertinoButton(
+                  onPressed: () {
+                    // Display Menu
+                    _showImageOptions();
+                  },
+                  child: const Text("Add Photo")),
+              const SizedBox(
+                height: 10,
               ),
-            ),
-          ],
+              Container(
+                decoration: BoxDecoration(
+                    color: CupertinoTheme.of(context).barBackgroundColor,
+                    borderRadius: const BorderRadius.all(Radius.circular(10))),
+                margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: const EdgeInsets.all(5.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CupertinoTextFormFieldRow(
+                      style: TextStyle(
+                        color: CupertinoTheme.of(context).primaryColor,
+                      ),
+                      prefix: const Text('First Name:'),
+                      placeholder: "John",
+                      controller: _firstNameController,
+                    ),
+                    const Divider(
+                      color: CupertinoColors.systemGrey,
+                      thickness: 1,
+                      height: 20,
+                    ),
+                    CupertinoTextFormFieldRow(
+                      style: TextStyle(
+                        color: CupertinoTheme.of(context).primaryColor,
+                      ),
+                      prefix: const Text('Last Name:'),
+                      placeholder: "Doe",
+                      controller: _lastNameController,
+                    ),
+                    const Divider(
+                      color: CupertinoColors.systemGrey,
+                      thickness: 1,
+                      height: 20,
+                    ),
+                    CupertinoTextFormFieldRow(
+                      style: TextStyle(
+                        color: CupertinoTheme.of(context).primaryColor,
+                      ),
+                      prefix: const Text('Phone Number:'),
+                      placeholder: "(123) 456-7890",
+                      controller: _phoneNumberController,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const Divider(
+                      color: CupertinoColors.systemGrey,
+                      thickness: 1,
+                      height: 20,
+                    ),
+                    CupertinoTextFormFieldRow(
+                      style: TextStyle(
+                        color: CupertinoTheme.of(context).primaryColor,
+                      ),
+                      placeholder: "123 Main St, Springfield, IL 62704",
+                      prefix: const Text('Address:'),
+                      controller: _addressController,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

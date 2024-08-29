@@ -132,7 +132,7 @@ class _EditPageState extends State<EditPage> {
         cancelButton: CupertinoActionSheetAction(
           child: const Text('Cancel'),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(context, "Contact Not Updated");
           },
         ),
       ),
@@ -154,7 +154,7 @@ class _EditPageState extends State<EditPage> {
           padding: EdgeInsets.zero,
           child: const Text('Cancel'),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(context, "User cancel edit contact");
           },
         ),
         trailing: CupertinoButton(
@@ -173,21 +173,22 @@ class _EditPageState extends State<EditPage> {
               const SizedBox(
                 height: 50,
               ),
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: CupertinoTheme.of(context).barBackgroundColor,
-                backgroundImage: contact.profilePicture != ""
-                    ? FileImage(File(contact.profilePicture))
-                    : const AssetImage('assets/default_profile.png')
-                        as ImageProvider,
-                child: contact.profilePicture == ""
-                    ? const Icon(
+              contact.profilePicture != ""
+                  ? CircleAvatar(
+                      radius: 50,
+                      backgroundColor:
+                          CupertinoTheme.of(context).barBackgroundColor,
+                      backgroundImage: FileImage(File(contact.profilePicture)),
+                      child: null)
+                  : CircleAvatar(
+                      radius: 50,
+                      backgroundColor:
+                          CupertinoTheme.of(context).barBackgroundColor,
+                      child: const Icon(
                         CupertinoIcons.profile_circled,
                         color: CupertinoColors.systemGrey,
                         size: 100,
-                      )
-                    : null,
-              ),
+                      )),
               CupertinoButton(
                   onPressed: () {
                     // Display Menu

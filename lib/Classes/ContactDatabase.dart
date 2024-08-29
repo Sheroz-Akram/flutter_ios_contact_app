@@ -39,9 +39,25 @@ class ContactDatabase {
     );
   }
 
-  Future<List<Contact>> getContacts() async {
+  Future<List<Contact>> getContacts({String searchQuery = ""}) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('contacts');
+    List<Map<String, dynamic>> maps;
+
+    if (searchQuery.isEmpty) {
+      // If searchQuery is empty, get all contacts
+      maps = await db.query('contacts');
+    } else {
+      // If searchQuery is not empty, perform a WHERE query to filter by name or phone number
+      maps = await db.query(
+        'contacts',
+        where: 'firstName LIKE ? OR lastName LIKE ? OR phoneNumber LIKE ?',
+        whereArgs: [
+          '%$searchQuery%', // for firstName match
+          '%$searchQuery%', // for lastName match
+          '%$searchQuery%' // for phoneNumber match
+        ],
+      );
+    }
 
     return List.generate(maps.length, (i) {
       return Contact.fromMap(maps[i]);

@@ -6,6 +6,7 @@ import 'package:flutter_ios_contact_app/Components/ContactList.dart';
 import 'package:flutter_ios_contact_app/Pages/EditContact.dart';
 import 'package:flutter_ios_contact_app/Pages/NewContact.dart';
 import 'package:flutter_ios_contact_app/Pages/Settings.dart';
+import 'package:flutter_ios_contact_app/Pages/ViewContact.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,12 +19,18 @@ class HomePage extends StatefulWidget {
 class _HomePage extends State<HomePage> {
   // Attributes
   List<Contact> contactList = [];
+  String searchQuery = "";
 
   // Load Contact from Memeory
   void loadContacts() async {
     print("Contacts Loaded");
     ContactDatabase contactDataBase = ContactDatabase();
-    List<Contact> contacts = await contactDataBase.getContacts();
+    List<Contact> contacts;
+    if (searchQuery == "") {
+      contacts = await contactDataBase.getContacts();
+    } else {
+      contacts = await contactDataBase.getContacts(searchQuery: searchQuery);
+    }
     setState(() {
       contactList = contacts;
     });
@@ -41,26 +48,31 @@ class _HomePage extends State<HomePage> {
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () {
+            onPressed: () async {
               // Move to Settings Page
-              Navigator.push(
+              var result = await Navigator.push(
                 context,
                 CupertinoPageRoute(
                   builder: (context) => const SettingsPage(),
                 ),
               );
+              print("After the Object Popped");
+              if (result != null) {
+                loadContacts();
+              }
             },
             child: const Text("Settings")),
         middle: const Text("Contacts List"),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           child: const Icon(CupertinoIcons.add),
-          onPressed: () {
+          onPressed: () async {
             // Move to Add Contact Page
-            Navigator.push(
+            await Navigator.push(
                 context,
                 CupertinoPageRoute(
                     builder: (context) => const NewContactPage()));
+            loadContacts();
           },
         ),
       ),
@@ -85,7 +97,12 @@ class _HomePage extends State<HomePage> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
               child: CupertinoSearchTextField(
-                onChanged: (value) {},
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                  loadContacts();
+                },
               ),
             ),
 
@@ -106,12 +123,21 @@ class _HomePage extends State<HomePage> {
                     contactList.removeAt(index);
                   });
                 },
-                editContact: (Contact contact) {
+                editContact: (Contact contact) async {
                   // Move to Edit Contact Page
-                  Navigator.push(
+                  await Navigator.push(
                       context,
                       CupertinoPageRoute(
                           builder: (context) => EditPage(contact: contact)));
+                  loadContacts();
+                },
+                viewContact: (Contact contact) async {
+                  // Show contact details or perform another action
+                  await Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                          builder: (context) => ViewContact(contact: contact)));
+                  loadContacts();
                 },
               ),
             ),

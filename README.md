@@ -14,9 +14,7 @@ Search and Filter: Quickly search for contacts and filter results by name or oth
 ## Screenshots
 
 ### Dark Mode
-<img src="images/dark/1.jpg" width="200"> <img src="images/dark/2.jpg" width="200"> <img src="images/dark/3.jpg" width="200">
-<img src="images/dark/4.jpg" width="200"> <img src="images/dark/5.jpg" width="200">
+<img src="Images/dark/1.jpg" width="200"> <img src="Images/dark/2.jpg" width="200"> <img src="Images/dark/3.jpg" width="200"> <img src="Images/dark/4.jpg" width="200"> <img src="Images/dark/5.jpg" width="200">
 
 ### Light Mode
-<img src="images/light/1.jpg" width="200"> <img src="images/light/2.jpg" width="200"> <img src="images/light/3.jpg" width="200">
-<img src="images/light/4.jpg" width="200"> <img src="images/light/5.jpg" width="200">
+<img src="Images/light/1.jpg" width="200"> <img src="Images/light/2.jpg" width="200"> <img src="Images/light/3.jpg" width="200"> <img src="Images/light/4.jpg" width="200"> <img src="Images/light/5.jpg" width="200">
